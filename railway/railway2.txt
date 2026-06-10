@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALLOWANCE VIEWER </title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0f2346;
+    --navy-mid: #1a3560;
+    --accent: #e8a020;
+    --accent-light: #fdf3e0;
+    --teal: #1d9e75;
+    --teal-light: #e1f5ee;
+    --coral: #d85a30;
+    --coral-light: #faece7;
+    --purple: #534ab7;
+    --purple-light: #eeedfe;
+    --blue: #185fa5;
+    --blue-light: #e6f1fb;
+    --gray-100: #f4f3f0;
+    --gray-200: #e8e7e2;
+    --gray-400: #9a9890;
+    --gray-600: #5f5e5a;
+    --gray-800: #2c2c2a;
+    --white: #ffffff;
+    --shadow: 0 2px 12px rgba(15,35,70,0.10);
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--gray-100);
+    color: var(--gray-800);
+    min-height: 100vh;
+  }
+
+  /* ===== LOGIN PAGE ===== */
+  #login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 60%, #0d3a5c 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  #login-page::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: rgba(232,160,32,0.06);
+    top: -200px; right: -150px;
+  }
+  #login-page::after {
+    content: '';
+    position: absolute;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+    bottom: -150px; left: -100px;
+  }
+  .login-box {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 3rem 2.5rem;
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    z-index: 1;
+  }
+  .login-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 2rem;
+  }
+  .login-logo-icon {
+    width: 48px; height: 48px;
+    background: var(--navy);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .login-logo-icon svg { width: 28px; height: 28px; fill: var(--accent); }
+  .login-logo-text h1 { font-size: 18px; font-weight: 600; color: var(--navy); }
+  .login-logo-text p { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+
+  .login-title { font-size: 22px; font-weight: 600; color: var(--gray-800); margin-bottom: 6px; }
+  .login-sub { font-size: 14px; color: var(--gray-400); margin-bottom: 2rem; }
+
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-600);
+    margin-bottom: 6px;
+  }
+  .form-group input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 8px;
+    font-size: 15px;
+    color: var(--gray-800);
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus { border-color: var(--navy); }
+  .login-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--navy);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    transition: background 0.2s;
+  }
+  .login-btn:hover { background: var(--navy-mid); }
+  .login-error {
+    background: #fee2e2;
+    color: #b91c1c;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 1rem;
+    display: none;
+  }
+  .login-error.show { display: block; }
+
+  /* ===== DASHBOARD PAGE ===== */
+  #dashboard-page { display: none; }
+
+  .topbar {
+    background: var(--navy);
+    color: var(--white);
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar-icon {
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .topbar-icon svg { width: 20px; height: 20px; fill: var(--accent); }
+  .topbar h2 { font-size: 16px; font-weight: 600; }
+  .topbar p { font-size: 12px; color: rgba(255,255,255,0.55); }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .user-badge {
+    background: rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
+  }
+  .logout-btn {
+    background: rgba(232,160,32,0.15);
+    border: 1px solid rgba(232,160,32,0.4);
+    color: var(--accent);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .logout-btn:hover { background: rgba(232,160,32,0.25); }
+
+  .main-content { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+
+  /* section headers */
+  .section-header {
+    display: flex; align-items: baseline; gap: 10px;
+    margin-bottom: 1.25rem;
+  }
+  .section-header h3 { font-size: 17px; font-weight: 600; color: var(--navy); }
+  .section-header span { font-size: 13px; color: var(--gray-400); }
+
+  /* Department grid */
+  .dept-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 2.5rem;
+  }
+  .dept-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 1.2rem;
+    border: 1.5px solid var(--gray-200);
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .dept-card:hover {
+    border-color: var(--navy);
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+  }
+  .dept-card.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,160,32,0.15); }
+  .dept-card::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: var(--dept-color, var(--navy));
+  }
+  .dept-card-badge {
+    display: inline-block;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: var(--dept-bg, var(--gray-100));
+    color: var(--dept-color, var(--navy));
+    margin-bottom: 8px;
+  }
+  .dept-card h4 { font-size: 13px; font-weight: 600; color: var(--gray-800); margin-bottom: 3px; }
+  .dept-card p { font-size: 11px; color: var(--gray-400); }
+  .dept-card .dept-count {
+    position: absolute; top: 12px; right: 12px;
+    font-size: 20px; font-weight: 700;
+    color: var(--gray-200);
+  }
+
+  /* Charts row */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .chart-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1.5px solid var(--gray-200);
+    padding: 1.5rem;
+  }
+  .chart-card h4 { font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 1rem; }
+  .chart-wrap { position: relative; width: 100%; height: 280px; }
+
+  /* Flowchart */
+  .flowchart-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1.5px solid var(--gray-200);
+    padding: 1.5rem;
+    margin-bottom: 2.5rem;
+    overflow-x: auto;
+  }
+  .flowchart-card h4 { font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 1.5rem; }
+
+  /* Tooltip */
+  #tooltip {
+    position: fixed;
+    background: var(--white);
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    max-width: 320px;
+    pointer-events: none;
+    display: none;
+    z-index: 9999;
+    font-size: 13px;
+  }
+  #tooltip h5 { font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 8px; border-bottom: 1px solid var(--gray-200); padding-bottom: 6px; }
+  #tooltip .ed-item { padding: 4px 0; border-bottom: 1px solid var(--gray-100); }
+  #tooltip .ed-item:last-child { border-bottom: none; }
+  #tooltip .ed-code { font-size: 11px; font-weight: 600; color: var(--accent); font-family: monospace; }
+  #tooltip .ed-desc { font-size: 12px; color: var(--gray-600); }
+  #tooltip .ed-short { font-size: 11px; color: var(--gray-400); }
+
+  /* ED table below */
+  .edtable-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1.5px solid var(--gray-200);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .edtable-card h4 { font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 0.5rem; }
+  .edtable-card p { font-size: 13px; color: var(--gray-400); margin-bottom: 1rem; }
+  .ed-table-wrap { overflow-x: auto; max-height: 320px; overflow-y: auto; }
+  table.ed-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.ed-table th {
+    background: var(--navy);
+    color: var(--white);
+    padding: 9px 12px;
+    text-align: left;
+    font-weight: 500;
+    position: sticky; top: 0;
+  }
+  table.ed-table td { padding: 8px 12px; border-bottom: 1px solid var(--gray-100); }
+  table.ed-table tr:hover td { background: var(--gray-100); }
+  .badge-code {
+    font-family: monospace;
+    font-size: 11px;
+    background: var(--accent-light);
+    color: var(--coral);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .badge-e { background: #e1f5ee; color: var(--teal); }
+  .badge-d { background: #faece7; color: var(--coral); }
+
+  .legend-row {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    margin-bottom: 12px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--gray-600);
+  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  /* SVG flowchart nodes */
+  .flow-node { cursor: pointer; transition: opacity 0.15s; }
+  .flow-node:hover rect, .flow-node:hover ellipse { filter: brightness(0.92); }
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="login-page">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 15.5A2.5 2.5 0 0 0 6.5 18h11a2.5 2.5 0 0 0 0-5H17l-1-4H8L7 13H6.5A2.5 2.5 0 0 0 4 15.5z"/>
+          <rect x="7" y="18" width="2" height="3" rx="1"/>
+          <rect x="15" y="18" width="2" height="3" rx="1"/>
+          <path d="M2 10h20M7 6h10"/>
+        </svg>
+      </div>
+      <div class="login-logo-text">
+        <h1>Indian Railways</h1>
+        <p>Administration System</p>
+      </div>
+    </div>
+    <h2 class="login-title">Sign in</h2>
+    <p class="login-sub">Access the department dashboard</p>
+    <div class="login-error" id="login-error">Invalid Employee ID or password. Please try again.</div>
+    <div class="form-group">
+      <label for="emp-id">Employee ID</label>
+      <input type="number" id="emp-id" placeholder="Enter employee ID" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="Enter password" autocomplete="current-password">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Sign in</button>
+  </div>
+</div>
+
+<!-- TOOLTIP -->
+<div id="tooltip"></div>
+
+<!-- DASHBOARD PAGE -->
+<div id="dashboard-page">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 15.5A2.5 2.5 0 0 0 6.5 18h11a2.5 2.5 0 0 0 0-5H17l-1-4H8L7 13H6.5A2.5 2.5 0 0 0 4 15.5z"/>
+          <rect x="7" y="18" width="2" height="3" rx="1"/>
+          <rect x="15" y="18" width="2" height="3" rx="1"/>
+        </svg>
+      </div>
+      <div>
+        <h2>Railway Admin Dashboard</h2>
+        <p>Departments &amp; Earning/Deduction Codes</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="user-badge" id="user-badge">EMP #101</div>
+      <button class="logout-btn" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+
+    <!-- Dept Cards -->
+    <div class="section-header">
+      <h3>Departments</h3>
+      <span>Click a department to explore its ED codes</span>
+    </div>
+    <div class="dept-grid" id="dept-grid"></div>
+
+    <!-- Charts -->
+    <div class="section-header">
+      <h3>Department Analytics</h3>
+      <span>ED code distribution</span>
+    </div>
+    <div class="charts-row">
+      <div class="chart-card">
+        <h4>Active departments — bar chart</h4>
+        <div class="chart-wrap">
+          <canvas id="barChart" role="img" aria-label="Bar chart showing active departments by code count">Active railway departments.</canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flowchart -->
+    <div class="section-header">
+      <h3>Department → ED code flow</h3>
+      <span>Hover nodes to see ED code details</span>
+    </div>
+    <div class="flowchart-card">
+      <h4>Organisational flowchart — earning &amp; deduction codes by department</h4>
+      <div id="flowchart-svg-wrap"></div>
+    </div>
+
+    <!-- ED Table -->
+    <div class="section-header">
+      <h3>Earning / Deduction codes</h3>
+      <span id="ed-table-label">All codes — click a department card to filter</span>
+    </div>
+    <div class="edtable-card">
+      <h4 id="ed-table-title">All ED Codes</h4>
+      <p id="ed-table-desc">Showing all earning and deduction codes from the database</p>
+      <div class="legend-row">
+        <div class="legend-item"><div class="legend-dot" style="background:#1d9e75;"></div>Earning code (starts with E)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#d85a30;"></div>Deduction code (starts with D)</div>
+      </div>
+      <div class="ed-table-wrap">
+        <table class="ed-table">
+          <thead><tr><th>Code</th><th>Short Desc</th><th>Long Description</th><th>Type</th></tr></thead>
+          <tbody id="ed-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ======= DATA =======
+const loginDB = [{ empid: 101, password: '123' }];
+
+const departments = [
+  { deptno: '01', deptdesc: 'ACCOUNTS',     arpan: 'ACC', status: 1 },
+  { deptno: '02', deptdesc: 'AUDIT',         arpan: 'ADT', status: 1 },
+  { deptno: '03', deptdesc: 'GEN. ADMN.',    arpan: 'ADM', status: 1 },
+  { deptno: '04', deptdesc: 'COMMERCIAL',    arpan: 'COM', status: 1 },
+  { deptno: '05', deptdesc: 'ENGINEERING',   arpan: 'ENG', status: 1 },
+  { deptno: '06', deptdesc: 'ELECTRICAL',    arpan: 'ELE', status: 1 },
+  { deptno: '07', deptdesc: 'MECHANICAL',    arpan: 'MEC', status: 1 },
+  { deptno: '08', deptdesc: 'MEDICAL',       arpan: 'MED', status: 1 },
+  { deptno: '09', deptdesc: 'OPERATING',     arpan: 'OPT', status: 1 },
+  { deptno: '10', deptdesc: 'PERSONNEL',     arpan: 'PER', status: 1 },
+  { deptno: '11', deptdesc: 'SnT',           arpan: 'SNT', status: 1 },
+  { deptno: '12', deptdesc: 'STORES',        arpan: 'STR', status: 1 },
+  { deptno: '13', deptdesc: 'SECURITY',      arpan: 'SEC', status: 1 },
+];
+
+const deptColors = [
+  '#0f2346','#185fa5','#1d9e75','#534ab7','#d85a30',
+  '#ba7517','#3b6d11','#993556','#639922','#0f6e56',
+  '#3c3489','#a32d2d','#5f5e5a'
+];
+const deptBgs = [
+  '#e6f1fb','#e6f1fb','#e1f5ee','#eeedfe','#faece7',
+  '#faeeda','#eaf3de','#fbeaf0','#eaf3de','#e1f5ee',
+  '#eeedfe','#fcebeb','#f1efe8'
+];
+
+// ED codes — grouped by prefix category for dept mapping
+const edcodes = [
+  {code:'EW680',long:'REMOTE LOCALITY ALLOWANCE',short:'RLA'},
+  {code:'EW70A',long:'ARREARS OF SUMPTUARY ALLOWANCE',short:'AR.SUM-ALL'},
+  {code:'EWE10',long:'NIGHT DUTY ALLOWANCE - INTERMITTENT',short:'NDA-INTR'},
+  {code:'EM2220',long:'NEWS MAGAZINE-MTK',short:'NEWSMAG'},
+  {code:'E0211',long:'PROV-CCA',short:'PROV-CCA'},
+  {code:'EWT810',long:'RE-SPECIAL (DUTY) ALLOWANCE',short:'RE-SDA'},
+  {code:'EM122',long:'REFUND COMMERCIAL DEBIT',short:'REF COMRL-DEBIT'},
+  {code:'EM005',long:'GALANTRY AWARD',short:'GALANTRY AWARD'},
+  {code:'EW114',long:'MELA ALLOWANCE',short:'MELA-ALL'},
+  {code:'EM101',long:'REFUND OF REC.OF HOSP. DIET',short:'RF HOS-DIET'},
+  {code:'EP001',long:'NPST-GOV',short:'NPST-GOV'},
+  {code:'EM062',long:'REIMB-SOAP TOILET',short:'REIMB-SOAP TOILET'},
+  {code:'E0101',long:'SUSP. PAY',short:'SUSP. PAY'},
+  {code:'EHS004',long:'REFUND CENTRAL GOVT. HEALTH SCHEME.',short:'REFUND CGHS'},
+  {code:'EW11A',long:'WASHING ALLOWANCE GENERAL ARREARS',short:'AR W/AL'},
+  {code:'EW12A',long:'ARREAR LAUNDRY ALLOWANCE',short:'AR-LAUNDRY-AL'},
+  {code:'EW130',long:'UNIFORM ALLOWANCE',short:'UNIFORM-AL'},
+  {code:'EW150',long:'BAD CLIMATE ALLOWANCE',short:'BCA'},
+  {code:'EW200',long:'NURSING ALLOWANCE',short:'NURSING-AL'},
+  {code:'EW250',long:'POST GRADUATE ALLOWANCE',short:'PG-ALLOW'},
+  {code:'EW260',long:'RESEARCH /ANNUAL ALLOWANCE',short:'RESEARCH AL'},
+  {code:'EW270',long:'OFFICIATING ALLOWANCE/ NON-RUNNING',short:'OFF-ALL(NR)'},
+  {code:'EW280',long:'OFFICIATING ALLOWANCE/RUNNING',short:'OFF-ALL'},
+  {code:'EW310',long:'BREAKDOWN ALLOWANCE',short:'BDA'},
+  {code:'EW340',long:'PARADE ALLOW.',short:'PARADE ALL'},
+  {code:'EW380',long:'ISLAND ALLOW.',short:'ISLAND ALL.'},
+  {code:'EW400',long:'MATCHING ALLOW.',short:'MATC-ALL'},
+  {code:'EW430',long:'ANIMAL ALLOW.',short:'ANIMAL ALL'},
+  {code:'EW451',long:'ACADEMIC ALLOWANCE',short:'ACDMIC'},
+  {code:'EW480',long:'OUT-TURN ALLOW.',short:'OUTTURN ALL'},
+  {code:'EW500',long:'KIT MAINTENANCE ALLOWANCE',short:'KMT ALL'},
+  {code:'EW510',long:'ANNUAL ALLOWANCE',short:'ANNL ALL'},
+  {code:'EW530',long:'PHYSIOTHERAPY ALLOWANCE',short:'PHYSIO ALL'},
+  {code:'EW540',long:'OPERATION THEATRE ALLOWANCE',short:'OP TH ALL'},
+  {code:'EW550',long:'HOSPITAL PATIENT CARE ALLOWANCE',short:'HPTC-ALL'},
+  {code:'EW560',long:'PATIENT CARE ALLOWANCE',short:'PTC-ALL'},
+  {code:'EW570',long:'LIBRARY ALLOWANCE',short:'LIBALL'},
+  {code:'EW600',long:'RATION MONEY ALLOWANCE',short:'R-M-ALL'},
+  {code:'EW660',long:'STITCHING ALLOWANCE',short:'STITCH-ALL'},
+  {code:'EW670',long:'CAMP ALLOWANCE',short:'CAMP-ALL'},
+  {code:'EW700',long:'SUMPTUARY ALLOWANCE',short:'SUMPT. ALL'},
+  {code:'EW720',long:'MACHINE ALLOW.',short:'MACHINE ALL.'},
+  {code:'EW860',long:'TOUGH LOCATION ALLOWANCE-II',short:'TLA-II'},
+  {code:'EW870',long:'TOUGH LOCATION ALLOWANCE-III',short:'TLA-III'},
+  {code:'EW920',long:'EXTRA WORK ALLOWANCE',short:'EXTRA WORK ALL'},
+  {code:'EW950',long:'RISK AND HARDSHIP ALLOWANCE FOR TRACK MAINTAINERS',short:'RISK ALL(TM)'},
+  {code:'EW960',long:'DRESS ALLOWANCE -ANNUAL',short:'DRESS AL ANNUAL'},
+  {code:'EW970',long:'SPECIAL ALL CHILDCARE WOMEN H/CAP',short:'SA-CCARE(WH)'},
+  {code:'EW980',long:'HEALTH AND MALARIA ALLOWANCE',short:'HMA'},
+  {code:'EW990',long:'TROLLEY BAG ALLOWANCE(RUNNING)',short:'TROLLEY BAG AL(R)'},
+  {code:'EM014',long:'HOSTEL SUBSIDY',short:'HSTL SUB'},
+  {code:'EM026',long:'REIMBURSEMENT OF WATER BOTTLE',short:'RE WATER BOTTLE'},
+  {code:'EM100',long:'MEDICAL REIMBURSEMENT',short:'MED-REIM.'},
+  {code:'EM159',long:'BOX ALLOWANCE',short:'BOX ALL'},
+  {code:'EM500',long:'FIXED TRANSPORT ALLOWANCE FOR RE-ENGAGED STAFF',short:'TPT-RE-ENGAGED'},
+  {code:'EMS001',long:'MEDICAL REIMBURSEMENT RB',short:'MED-REIM.RB'},
+  {code:'EMS016',long:'CHILDREN EDUCATION ALLOWANCE-RB',short:'CH.EDU-ALL-RB'},
+  {code:'EMS122',long:'REIMBURSEMENT OF BAG-BRIEFCASE',short:'REIMB BAG-BRIEF'},
+  {code:'EM3030',long:'ADDITIONAL HOUSE RENT ALLOWANCE FOR KASHMIR VALLEY',short:'ADDITIONAL HRA'},
+  {code:'EM3040',long:'DIEM ALLOWANCE FOR KASHMIR VALLEY',short:'DIEM ALL'},
+  {code:'EM3010',long:'INCENTIVE USBRL OFFICERS',short:'INCENTIVE'},
+  {code:'EM1001',long:'MUMBAI PORT TRUST ALLOWANCE',short:'MTP ALLOW'},
+  {code:'EP001',long:'NPST-GOV',short:'NPST-GOV'},
+  {code:'EP061',long:'ADVANCE INCREMENT GRANTED TO STENOGRAPHERS',short:'ADV-INC-STENOGR'},
+  {code:'EU001',long:'UPS-GOV',short:'UPS-GOV'},
+  {code:'E0080',long:'LEAVE ENCASHMENT PAY',short:'LV-EN-PAY'},
+  {code:'E0101',long:'SUSP. PAY',short:'SUSP. PAY'},
+  {code:'E001A',long:'ARREARS BASIC PAY',short:'AR PAY'},
+  {code:'E071A',long:'ARREARS 7PC PAY',short:'AR 7 PC PAY'},
+  {code:'E009A',long:'ARREAR LEAVE ENCASHMENT DA',short:'AR LV-EN-DA'},
+  {code:'E0B040',long:'COMPENSATORY (CITY) ALLOWANCE',short:'CCA'},
+  {code:'E0B0P0',long:'DEARNESS PAY',short:'DP'},
+  {code:'E0B02F',long:'VARIABLE DEARNESS ALLOWANCE',short:'VAR DA'},
+  {code:'E0B03F',long:'HOUSE RENT ALLOWANCE - FIXED',short:'FIX-HRA'},
+  {code:'EBB060',long:'INCENTIVE HIGH QUALIFICATION',short:'INCENTIVE-HQ'},
+  {code:'EBB070',long:'INCENTIVE EDUCATIONAL QUALIFICATION',short:'INCENTIVE-EQ'},
+  {code:'EB010',long:'PRODUCTIVITY LINKED BONUS',short:'PLB'},
+  {code:'EB030',long:'HONORARIUM',short:'HONORARIUM'},
+  {code:'EB050',long:'HONORARIUM EXAM RRB',short:'HONORARIUM-RRB'},
+  {code:'EB060',long:'HONORARIUM-HINDI(OL)',short:'HONRM-HINDI(OL)'},
+  {code:'EB080',long:'ARREAR -SIXTH PAY COMMISSION',short:'ARR-6PC'},
+  {code:'EB100',long:'ADHOC BONUS',short:'ADH-BONUS'},
+  {code:'EBA50',long:'HONORARIUM-AUDIT',short:'HON-AUDIT'},
+  {code:'EA005',long:'MOTOR CYCLE/SCOOTER ADVANCE',short:'MOTORCYCLE ADV'},
+  {code:'EA006',long:'CYCLE ADVANCE',short:'CYCLE ADV'},
+  {code:'EA011',long:'DROUGHT ADVANCE',short:'DROUGHT ADV'},
+  {code:'EA015',long:'ADVANCE OF PAY/TERRITORIAL ARMY',short:'ADVPAY.T.A'},
+  {code:'EA018',long:'ADVANCE FOR DEPUTATION ABROAD',short:'DEP-ABD-ADV'},
+  {code:'EA030',long:'ADVANCE OF PAY',short:'ADV-PAY'},
+  {code:'EFA01',long:'REFUND OF HOUSE BUILDING ADV RECOVERY',short:'RF.HB-ADV'},
+  {code:'EFA02',long:'REFUND OF HBA OUTER LOAN RECOVERY',short:'RF.HBAOUT'},
+  {code:'EFA03',long:'REFUND OF PERSONAL COMPUTER ADV.',short:'RF.PC-ADV'},
+  {code:'EFA04',long:'REFUND OF MOTOR CAR ADVANCE',short:'RF.MCR-ADV'},
+  {code:'EFA05',long:'REFUND OF MOTOR CYCLE/SCOOTER ADVANCE',short:'RF.RECV SCOOTER ADV'},
+  {code:'EFA06',long:'REFUND OF CYCLE ADVANCE',short:'RF.RECV CYCLE ADV'},
+  {code:'EFA07',long:'REFUND OF TABLE FAN ADVANCE',short:'RF.FAN-ADV'},
+  {code:'EH5010',long:'SPECIAL INCENTIVE',short:'SP-INC'},
+  {code:'EHC501',long:'REFUND OF SCHOOL BUS CHARGES',short:'REFUND-SCHOOL BUS'},
+  {code:'EAF00',long:'GENERAL FESTIVAL ALLOWANCE',short:'FEST. ADV'},
+  {code:'EWB211',long:'CONVEYANCE ALLOWANCE/HANDICAPPED',short:'CONV A/H'},
+  {code:'EWB450',long:'TRANSFER ALLOW.',short:'TRANSF-AL.'},
+  {code:'EWB490',long:'CELL ALLOWANCE',short:'CELL ALL'},
+  {code:'EWB520',long:'SUPERVISORY ALLOWANCE',short:'SUPR ALL'},
+  {code:'EMB151',long:'MILK ALLOWANCE',short:'MILK ALL'},
+  {code:'EMB167',long:'SPECIAL DUTY ALLOWANCE',short:'SDA'},
+  {code:'EMU008',long:'CASH AWARD-RDSO',short:'CASH AWARD-RDSO'},
+  {code:'EFS030',long:'FOREIGN TRAVELLING ALLOWANCE ADVANCE',short:'FOREIGN TRAV ADV'},
+  {code:'EWX030',long:'TRAVELLING ALLOWANCE - IRWO',short:'TA'},
+  {code:'EWX050',long:'DUAL CHARGE ALLOWANCE - IRWO',short:'DUAL.CHG.AL'},
+  {code:'EWM660',long:'DMW STITCHING ALLOWANCE',short:'STITCH-ALL'},
+  {code:'EWM930',long:'DMW DRESS ALLOWANCE NURSES',short:'DRESS AL NURSE'},
+  {code:'EM250',long:'HINDI CASH AWARD (AUDIT)',short:'HINDI CA-AUDIT'},
+  {code:'EW035',long:'REMUNERATION',short:'REMUNERATION'},
+  {code:'EW180',long:'DEPUTATION ALLOWANCE',short:'DEPUT-AL.'},
+  {code:'EW220',long:'MILEAGE ALLOWANCE',short:'MILEAGE AL'},
+  {code:'EW290',long:'EXTRA DUTY ALLOWANCE',short:'EDA'},
+  {code:'EW330',long:'OUT-FIT ALLOWANCE',short:'OUTF ALL'},
+  {code:'EW440',long:'ESCORT ALLOW.',short:'ESCORT ALL'},
+  {code:'EW640',long:'COMPENSATION UNDER ECA',short:'COMP_ECA'},
+  {code:'EFI04',long:'REFUND OF REC. OF INT CAR ADV',short:'RF.INT.CAR'},
+  {code:'EFI05',long:'REFUND OF REC. OF INT SCOOTER ADV',short:'RF.INT.SCTR'},
+  {code:'EFI06',long:'REFUND OF REC. OF INT CYCLE ADV',short:'RF.INTCYCLE'},
+  {code:'EFI07',long:'REFUND OF REC. OF INT FAN',short:'RF.INT.FAN'},
+  {code:'EN021',long:'REFUND OF FUTURE DEBIT',short:'REF FUT DEBIT'},
+  {code:'EM139',long:'REFUND OF STORES DEBIT',short:'REFUND-STR-DBT'},
+  {code:'EM510',long:'SHARE BILL',short:'SHARE BILL'},
+  {code:'EW461',long:'ADVANCE ALL INDIA LEAVE TRAVEL CONCESSION',short:'ADV-AILTC'},
+  {code:'EW210',long:'CONVEYANCE ALLOWANCE (DR.)',short:'CONVEY(DR)'},
+  {code:'EW170',long:'OUT OF POCKET ALLOWANCE',short:'OUT-PKT-AL'},
+  {code:'EW410',long:'RELAYING ALLOW.',short:'RELAYING AL'},
+];
+
+// Map dept codes to relevant ED code subsets (sample mapping)
+const deptEdMap = {
+  '01': edcodes.filter(e => ['E0101','E001A','E071A','E0080','E0B0P0','E0B02F','E0B040','E009A','EP001','EU001','EFA01','EFA02','EFA03'].includes(e.code)),
+  '02': edcodes.filter(e => ['EBA50','EM250','EMA02','EAA21','EAA01','EAA05','EAA09','EMBA02'].includes(e.code) || e.code.endsWith('B')),
+  '03': edcodes.filter(e => ['EW130','EW700','EW035','EAF00','EWB520','EWB490','EWB211','E0B03F','EW11A','EW12A'].includes(e.code)),
+  '04': edcodes.filter(e => ['EM122','EW400','EW440','EW600','EW670','EWB450','EW170','EW220','EFS030'].includes(e.code)),
+  '05': edcodes.filter(e => ['EW310','EW330','EW410','EW480','EW640','EW920','EW870','EW860','EW680','EW380','EWM660'].includes(e.code)),
+  '06': edcodes.filter(e => ['EW720','EW640','EW290','EW440','EWB520','EW150','EW380','EWT810','EW510'].includes(e.code)),
+  '07': edcodes.filter(e => ['EW310','EW500','EW720','EWM930','EWM660','EW330','EA005','EA006','EW960'].includes(e.code)),
+  '08': edcodes.filter(e => ['EW200','EW530','EW540','EW550','EW560','EW570','EW980','EMS001','EM100','EHS004','EWM930','EW73A'].includes(e.code)),
+  '09': edcodes.filter(e => ['EW280','EW270','EWE10','EW600','EW950','EW990','EW920','EW860','EW870','EMB167','EW340'].includes(e.code)),
+  '10': edcodes.filter(e => ['EP001','EP061','EU001','EW250','EW260','EW451','EB010','EB030','EB050','EB060','EB080','EB100','EA015','EA018','EA030'].includes(e.code)),
+  '11': edcodes.filter(e => ['EW720','EWB520','EW260','EW510','EH5010','EWB490','EWX050','EWX030'].includes(e.code)),
+  '12': edcodes.filter(e => ['EM139','EN021','EW600','EW480','EM026','EHC501','EAA01'].includes(e.code)),
+  '13': edcodes.filter(e => ['EW340','EW380','EW430','EW600','EMB167','EW150','EW600','EW670'].includes(e.code)),
+};
+
+let activeEmpId = null;
+let activeDept = null;
+let pieChart = null;
+let barChart = null;
+
+// ======= LOGIN =======
+function doLogin() {
+  const empid = parseInt(document.getElementById('emp-id').value);
+  const pw = document.getElementById('password').value;
+  const err = document.getElementById('login-error');
+  const match = loginDB.find(u => u.empid === empid && u.password === pw);
+  if (match) {
+    err.classList.remove('show');
+    activeEmpId = empid;
+    document.getElementById('user-badge').textContent = 'EMP #' + empid;
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('dashboard-page').style.display = 'block';
+    initDashboard();
+  } else {
+    err.classList.add('show');
+  }
+}
+document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+function doLogout() {
+  document.getElementById('login-page').style.display = 'flex';
+  document.getElementById('dashboard-page').style.display = 'none';
+  document.getElementById('emp-id').value = '';
+  document.getElementById('password').value = '';
+  activeDept = null;
+}
+
+// ======= DASHBOARD INIT =======
+function initDashboard() {
+  renderDeptCards();
+  renderEdTable(null);
+  renderCharts();
+  renderFlowchart();
+}
+
+// ======= DEPT CARDS =======
+function renderDeptCards() {
+  const grid = document.getElementById('dept-grid');
+  grid.innerHTML = '';
+  departments.forEach((d, i) => {
+    const color = deptColors[i % deptColors.length];
+    const bg = deptBgs[i % deptBgs.length];
+    const edCount = (deptEdMap[d.deptno] || []).length;
+    const card = document.createElement('div');
+    card.className = 'dept-card';
+    card.style.setProperty('--dept-color', color);
+    card.style.setProperty('--dept-bg', bg);
+    card.dataset.deptno = d.deptno;
+    card.innerHTML = `
+      <div class="dept-card-badge">${d.arpan}</div>
+      <div class="dept-count">${d.deptno}</div>
+      <h4>${d.deptdesc}</h4>
+      <p>${edCount} ED codes</p>
+    `;
+    card.addEventListener('click', () => selectDept(d.deptno));
+    grid.appendChild(card);
+  });
+}
+
+function selectDept(deptno) {
+  activeDept = activeDept === deptno ? null : deptno;
+  document.querySelectorAll('.dept-card').forEach(c => {
+    c.classList.toggle('active', c.dataset.deptno === activeDept);
+  });
+  renderEdTable(activeDept);
+  updateCharts(activeDept);
+}
+
+// ======= ED TABLE =======
+function renderEdTable(deptno) {
+  const tbody = document.getElementById('ed-tbody');
+  const title = document.getElementById('ed-table-title');
+  const desc = document.getElementById('ed-table-desc');
+  let codes = deptno ? (deptEdMap[deptno] || []) : edcodes;
+  const dept = departments.find(d => d.deptno === deptno);
+  title.textContent = dept ? dept.deptdesc + ' — ED Codes' : 'All ED Codes';
+  desc.textContent = `Showing ${codes.length} earning/deduction code${codes.length !== 1 ? 's' : ''}${dept ? ' for ' + dept.deptdesc : ''}`;
+  tbody.innerHTML = codes.map(e => {
+    const isDeduct = e.code.startsWith('D') || e.long.toLowerCase().includes('deduction') || e.long.toLowerCase().includes('recovery') || e.long.toLowerCase().includes('debit');
+    const type = isDeduct ? 'Deduction' : 'Earning';
+    const typeBadge = isDeduct ? 'badge-d' : 'badge-e';
+    return `<tr>
+      <td><span class="badge-code">${e.code}</span></td>
+      <td style="font-weight:500;font-size:12px;">${e.short}</td>
+      <td style="font-size:12px;color:#5f5e5a;">${e.long}</td>
+      <td><span class="badge-code ${typeBadge}">${type}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ======= CHARTS =======
+function renderCharts() {
+  const barLabels = departments.map(d => d.arpan);
+  const barData = departments.map(d => (deptEdMap[d.deptno] || []).length);
+  const barCtx = document.getElementById('barChart').getContext('2d');
+  barChart = new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: barLabels,
+      datasets: [{
+        label: 'ED codes',
+        data: barData,
+        backgroundColor: deptColors.map(c => c + 'cc'),
+        borderColor: deptColors,
+        borderWidth: 1.5,
+        borderRadius: 5,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 }, autoSkip: false, maxRotation: 45 } },
+        y: { grid: { color: '#f1efe8' }, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+function updateCharts(deptno) {
+  if (!barChart) return;
+  barChart.data.datasets[0].backgroundColor = departments.map((d, i) => {
+    const base = deptColors[i % deptColors.length];
+    if (!deptno) return base + 'cc';
+    return d.deptno === deptno ? base : base + '44';
+  });
+  barChart.update();
+}
+
+// ======= FLOWCHART =======
+function renderFlowchart() {
+  const wrap = document.getElementById('flowchart-svg-wrap');
+
+  const svgW = 1100, svgH = 520;
+  const rootX = 520, rootY = 50, rootW = 160, rootH = 44;
+  const colCount = 7;
+  const rowH = 80;
+  const nodeW = 130, nodeH = 38;
+
+  let svg = `<svg viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:${svgW}px;display:block;">
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#9a9890"/>
+    </marker>
+  </defs>`;
+
+  // Root node
+  svg += `<rect x="${rootX - rootW/2}" y="${rootY}" width="${rootW}" height="${rootH}" rx="8" fill="#0f2346"/>
+  <text x="${rootX}" y="${rootY + 26}" text-anchor="middle" font-size="13" font-weight="600" fill="#ffffff" font-family="'Segoe UI',sans-serif">Indian Railways</text>`;
+
+  // Intermediate: "Departments" label
+  const midY = rootY + rootH + 50;
+  const midX = rootX;
+  svg += `<line x1="${rootX}" y1="${rootY + rootH}" x2="${midX}" y2="${midY - 10}" stroke="#9a9890" stroke-width="1.5" marker-end="url(#arr)"/>`;
+  svg += `<rect x="${midX - 75}" y="${midY - 10}" width="150" height="36" rx="6" fill="#e8a020"/>
+  <text x="${midX}" y="${midY + 12}" text-anchor="middle" font-size="12" font-weight="600" fill="#0f2346" font-family="'Segoe UI',sans-serif">13 Departments</text>`;
+
+  // Dept nodes — 2 rows
+  const row1Depts = departments.slice(0, 7);
+  const row2Depts = departments.slice(7);
+  const row1Y = midY + 70, row2Y = row1Y + 90;
+  const gap1 = svgW / (row1Depts.length + 1);
+  const gap2 = svgW / (row2Depts.length + 1);
+
+  row1Depts.forEach((d, i) => {
+    const cx = gap1 * (i + 1);
+    const cy = row1Y;
+    const color = deptColors[i % deptColors.length];
+    const edList = (deptEdMap[d.deptno] || []).slice(0, 6);
+    const edHtml = encodeURIComponent(JSON.stringify({ dept: d.deptdesc, codes: edList }));
+    svg += `<line x1="${midX}" y1="${midY + 26}" x2="${cx}" y2="${cy}" stroke="#9a9890" stroke-width="1" stroke-dasharray="4,3"/>`;
+    svg += `<g class="flow-node" data-ed="${edHtml}" onmouseenter="showFlowTip(event,this)" onmouseleave="hideTip()">
+      <rect x="${cx - nodeW/2}" y="${cy - nodeH/2}" width="${nodeW}" height="${nodeH}" rx="7" fill="${color}" opacity="0.92"/>
+      <text x="${cx}" y="${cy - 4}" text-anchor="middle" font-size="11" font-weight="600" fill="#ffffff" font-family="'Segoe UI',sans-serif">${d.deptdesc}</text>
+      <text x="${cx}" y="${cy + 10}" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.7)" font-family="'Segoe UI',sans-serif">${d.arpan} · ${(deptEdMap[d.deptno]||[]).length} codes</text>
+    </g>`;
+  });
+
+  row2Depts.forEach((d, i) => {
+    const cx = gap2 * (i + 1);
+    const cy = row2Y;
+    const color = deptColors[(i + 7) % deptColors.length];
+    const edList = (deptEdMap[d.deptno] || []).slice(0, 6);
+    const edHtml = encodeURIComponent(JSON.stringify({ dept: d.deptdesc, codes: edList }));
+    svg += `<line x1="${midX}" y1="${midY + 26}" x2="${cx}" y2="${cy}" stroke="#9a9890" stroke-width="1" stroke-dasharray="4,3"/>`;
+    svg += `<g class="flow-node" data-ed="${edHtml}" onmouseenter="showFlowTip(event,this)" onmouseleave="hideTip()">
+      <rect x="${cx - nodeW/2}" y="${cy - nodeH/2}" width="${nodeW}" height="${nodeH}" rx="7" fill="${color}" opacity="0.92"/>
+      <text x="${cx}" y="${cy - 4}" text-anchor="middle" font-size="11" font-weight="600" fill="#ffffff" font-family="'Segoe UI',sans-serif">${d.deptdesc}</text>
+      <text x="${cx}" y="${cy + 10}" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.7)" font-family="'Segoe UI',sans-serif">${d.arpan} · ${(deptEdMap[d.deptno]||[]).length} codes</text>
+    </g>`;
+  });
+
+  // ED type legend at bottom
+  const legendY = row2Y + 65;
+  svg += `<rect x="30" y="${legendY}" width="140" height="36" rx="6" fill="#e1f5ee"/>
+  <text x="100" y="${legendY + 15}" text-anchor="middle" font-size="11" font-weight="600" fill="#0f6e56" font-family="'Segoe UI',sans-serif">Earning Codes</text>
+  <text x="100" y="${legendY + 29}" text-anchor="middle" font-size="10" fill="#1d9e75" font-family="'Segoe UI',sans-serif">Prefix E — Pay &amp; Allowances</text>`;
+  svg += `<rect x="200" y="${legendY}" width="140" height="36" rx="6" fill="#faece7"/>
+  <text x="270" y="${legendY + 15}" text-anchor="middle" font-size="11" font-weight="600" fill="#993c1d" font-family="'Segoe UI',sans-serif">Deduction Codes</text>
+  <text x="270" y="${legendY + 29}" text-anchor="middle" font-size="10" fill="#d85a30" font-family="'Segoe UI',sans-serif">Prefix D — Recoveries</text>`;
+  svg += `<text x="400" y="${legendY + 20}" font-size="11" fill="#9a9890" font-family="'Segoe UI',sans-serif">← Hover any department node to see its ED codes</text>`;
+
+  svg += `</svg>`;
+  wrap.innerHTML = svg;
+}
+
+// ======= TOOLTIP =======
+function showFlowTip(evt, el) {
+  const raw = decodeURIComponent(el.dataset.ed);
+  const data = JSON.parse(raw);
+  const tip = document.getElementById('tooltip');
+  let html = `<h5>${data.dept}</h5>`;
+  if (data.codes.length === 0) {
+    html += '<div class="ed-item"><span class="ed-desc">No specific codes mapped</span></div>';
+  } else {
+    data.codes.forEach(c => {
+      html += `<div class="ed-item">
+        <span class="ed-code">${c.code}</span>
+        <span class="ed-desc" style="margin-left:6px;">${c.long.length > 45 ? c.long.slice(0,45)+'…' : c.long}</span>
+      </div>`;
+    });
+    if ((deptEdMap[data.dept] || []).length > 6) {
+      html += `<div style="font-size:11px;color:#9a9890;margin-top:4px;">+ more codes — click department card for full list</div>`;
+    }
+  }
+  tip.innerHTML = html;
+  tip.style.display = 'block';
+  positionTip(evt);
+}
+
+document.addEventListener('mousemove', e => {
+  const tip = document.getElementById('tooltip');
+  if (tip.style.display === 'block') positionTip(e);
+});
+
+function positionTip(evt) {
+  const tip = document.getElementById('tooltip');
+  let x = evt.clientX + 14, y = evt.clientY + 14;
+  if (x + 320 > window.innerWidth) x = evt.clientX - 330;
+  if (y + 200 > window.innerHeight) y = evt.clientY - 200;
+  tip.style.left = x + 'px';
+  tip.style.top = y + 'px';
+}
+
+function hideTip() {
+  document.getElementById('tooltip').style.display = 'none';
+}
+</script>
+</body>
+</html>
