@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Allowance Viewer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0f2346;
+    --navy-mid: #1a3560;
+    --accent: #e8a020;
+    --accent-light: #fdf3e0;
+    --teal: #1d9e75;
+    --teal-light: #e1f5ee;
+    --coral: #d85a30;
+    --coral-light: #faece7;
+    --purple: #534ab7;
+    --purple-light: #eeedfe;
+    --blue: #185fa5;
+    --blue-light: #e6f1fb;
+    --gray-100: #f4f3f0;
+    --gray-200: #e8e7e2;
+    --gray-400: #9a9890;
+    --gray-600: #5f5e5a;
+    --gray-800: #2c2c2a;
+    --white: #ffffff;
+    --shadow: 0 2px 12px rgba(15,35,70,0.10);
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--gray-100);
+    color: var(--gray-800);
+    min-height: 100vh;
+  }
+
+  /* ===== LOGIN PAGE ===== */
+  #login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 60%, #0d3a5c 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  #login-page::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: rgba(232,160,32,0.06);
+    top: -200px; right: -150px;
+  }
+  #login-page::after {
+    content: '';
+    position: absolute;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+    bottom: -150px; left: -100px;
+  }
+  .login-box {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 3rem 2.5rem;
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    z-index: 1;
+  }
+  .login-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 2rem;
+  }
+  .login-logo-icon {
+    width: 48px; height: 48px;
+    background: var(--navy);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .login-logo-icon svg { width: 28px; height: 28px; fill: var(--accent); }
+  .login-logo-text h1 { font-size: 18px; font-weight: 600; color: var(--navy); }
+  .login-logo-text p { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+
+  .login-title { font-size: 22px; font-weight: 600; color: var(--gray-800); margin-bottom: 6px; }
+  .login-sub { font-size: 14px; color: var(--gray-400); margin-bottom: 2rem; }
+
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-600);
+    margin-bottom: 6px;
+  }
+  .form-group input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 8px;
+    font-size: 15px;
+    color: var(--gray-800);
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus { border-color: var(--navy); }
+  .login-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--navy);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    transition: background 0.2s;
+  }
+  .login-btn:hover { background: var(--navy-mid); }
+  .login-error {
+    background: #fee2e2;
+    color: #b91c1c;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 1rem;
+    display: none;
+  }
+  .login-error.show { display: block; }
+
+  /* ===== DASHBOARD PAGE ===== */
+  #dashboard-page { display: none; }
+
+  .topbar {
+    background: var(--navy);
+    color: var(--white);
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar-icon {
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .topbar-icon svg { width: 20px; height: 20px; fill: var(--accent); }
+  .topbar h2 { font-size: 16px; font-weight: 600; }
+  .topbar p { font-size: 12px; color: rgba(255,255,255,0.55); }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .user-badge {
+    background: rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
+  }
+  .logout-btn {
+    background: rgba(232,160,32,0.15);
+    border: 1px solid rgba(232,160,32,0.4);
+    color: var(--accent);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .logout-btn:hover { background: rgba(232,160,32,0.25); }
+
+  .main-content { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+
+  .section-header {
+    display: flex; align-items: baseline; gap: 10px;
+    margin-bottom: 1.25rem;
+  }
+  .section-header h3 { font-size: 17px; font-weight: 600; color: var(--navy); }
+  .section-header span { font-size: 13px; color: var(--gray-400); }
+
+  .dept-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 2.5rem;
+  }
+  .dept-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 1.2rem;
+    border: 1.5px solid var(--gray-200);
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .dept-card:hover {
+    border-color: var(--navy);
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+  }
+  .dept-card.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,160,32,0.15); }
+  .dept-card::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: var(--dept-color, var(--navy));
+  }
+  .dept-card-badge {
+    display: inline-block;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: var(--dept-bg, var(--gray-100));
+    color: var(--dept-color, var(--navy));
+    margin-bottom: 8px;
+  }
+  .dept-card h4 { font-size: 13px; font-weight: 600; color: var(--gray-800); margin-bottom: 3px; }
+  .dept-card p { font-size: 11px; color: var(--gray-400); }
+  .dept-card .dept-count {
+    position: absolute; top: 12px; right: 12px;
+    font-size: 20px; font-weight: 700;
+    color: var(--gray-200);
+  }
+
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .chart-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1.5px solid var(--gray-200);
+    padding: 1.5rem;
+  }
+  .chart-card h4 { font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 1rem; }
+  .chart-wrap { position: relative; width: 100%; height: 280px; }
+
+  .flowchart-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1.5px solid var(--gray-200);
+    padding: 1.5rem;
+    margin-bottom: 2.5rem;
+    overflow-x: auto;
+  }
+  .flowchart-card h4 { font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 1.5rem; }
+
+  #tooltip {
+    position: fixed;
+    background: var(--white);
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    max-width: 320px;
+    pointer-events: none;
+    display: none;
+    z-index: 9999;
+    font-size: 13px;
+  }
+  #tooltip h5 { font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 8px; border-bottom: 1px solid var(--gray-200); padding-bottom: 6px; }
+  .ed-item { padding: 4px 0; border-bottom: 1px solid var(--gray-100); }
+  .ed-item:last-child { border-bottom: none; }
+  .ed-code { font-size: 11px; font-weight: 600; color: var(--accent); font-family: monospace; }
+  .ed-desc { font-size: 12px; color: var(--gray-600); }
+
+  .edtable-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1.5px solid var(--gray-200);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .edtable-card h4 { font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 0.5rem; }
+  .edtable-card p { font-size: 13px; color: var(--gray-400); margin-bottom: 1rem; }
+  .ed-table-wrap { overflow-x: auto; max-height: 320px; overflow-y: auto; }
+  table.ed-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.ed-table th {
+    background: var(--navy);
+    color: var(--white);
+    padding: 9px 12px;
+    text-align: left;
+    font-weight: 500;
+    position: sticky; top: 0;
+  }
+  table.ed-table td { padding: 8px 12px; border-bottom: 1px solid var(--gray-100); }
+  table.ed-table tr:hover td { background: var(--gray-100); }
+  .badge-code {
+    font-family: monospace;
+    font-size: 11px;
+    background: var(--accent-light);
+    color: var(--coral);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .badge-e { background: #e1f5ee; color: var(--teal); }
+  .badge-d { background: #faece7; color: var(--coral); }
+
+  .legend-row {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    margin-bottom: 12px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--gray-600);
+  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  .flow-node { cursor: pointer; transition: opacity 0.15s; }
+  .flow-node:hover rect, .flow-node:hover ellipse { filter: brightness(0.92); }
+  .db-status {
+    background: var(--teal-light);
+    border-left: 4px solid var(--teal);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    margin-bottom: 16px;
+    color: var(--gray-600);
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="login-page">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 15.5A2.5 2.5 0 0 0 6.5 18h11a2.5 2.5 0 0 0 0-5H17l-1-4H8L7 13H6.5A2.5 2.5 0 0 0 4 15.5z"/>
+          <rect x="7" y="18" width="2" height="3" rx="1"/>
+          <rect x="15" y="18" width="2" height="3" rx="1"/>
+          <path d="M2 10h20M7 6h10"/>
+        </svg>
+      </div>
+      <div class="login-logo-text">
+        <h1>Indian Railways</h1>
+        <p>Administration System</p>
+      </div>
+    </div>
+    <h2 class="login-title">Sign in</h2>
+    <p class="login-sub">Access the department dashboard</p>
+    <div class="login-error" id="login-error">Invalid Employee ID or password. Please try again.</div>
+    <div class="form-group">
+      <label for="emp-id">Employee ID</label>
+      <input type="number" id="emp-id" placeholder="Enter employee ID" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="Enter password" autocomplete="current-password">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Sign in</button>
+  </div>
+</div>
+
+<!-- TOOLTIP -->
+<div id="tooltip"></div>
+
+<!-- DASHBOARD PAGE -->
+<div id="dashboard-page">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 15.5A2.5 2.5 0 0 0 6.5 18h11a2.5 2.5 0 0 0 0-5H17l-1-4H8L7 13H6.5A2.5 2.5 0 0 0 4 15.5z"/>
+          <rect x="7" y="18" width="2" height="3" rx="1"/>
+          <rect x="15" y="18" width="2" height="3" rx="1"/>
+        </svg>
+      </div>
+      <div>
+        <h2>Railway Admin Dashboard</h2>
+        <p>Departments &amp; Earning/Deduction Codes (MySQL Backend)</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="user-badge" id="user-badge">EMP #101</div>
+      <button class="logout-btn" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div id="db-status" class="db-status">🔄 Connecting to MySQL database via API...</div>
+
+    <!-- Dept Cards -->
+    <div class="section-header">
+      <h3>Departments</h3>
+      <span>Click a department to explore its ED codes (data from MySQL)</span>
+    </div>
+    <div class="dept-grid" id="dept-grid"></div>
+
+    <!-- Charts -->
+    <div class="section-header">
+      <h3>Department Analytics</h3>
+      <span>ED code distribution</span>
+    </div>
+    <div class="charts-row">
+      <div class="chart-card">
+        <h4>Active departments — bar chart</h4>
+        <div class="chart-wrap">
+          <canvas id="barChart" role="img" aria-label="Bar chart showing active departments by code count"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flowchart -->
+    <div class="section-header">
+      <h3>Department → ED code flow</h3>
+      <span>Hover nodes to see ED code details</span>
+    </div>
+    <div class="flowchart-card">
+      <h4>Organisational flowchart — earning &amp; deduction codes by department</h4>
+      <div id="flowchart-svg-wrap"></div>
+    </div>
+
+    <!-- ED Table -->
+    <div class="section-header">
+      <h3>Earning / Deduction codes</h3>
+      <span id="ed-table-label">All codes — click a department card to filter</span>
+    </div>
+    <div class="edtable-card">
+      <h4 id="ed-table-title">All ED Codes</h4>
+      <p id="ed-table-desc">Loading from MySQL database...</p>
+      <div class="legend-row">
+        <div class="legend-item"><div class="legend-dot" style="background:#1d9e75;"></div>Earning code (starts with E)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#d85a30;"></div>Deduction code (starts with D)</div>
+      </div>
+      <div class="ed-table-wrap">
+        <table class="ed-table">
+          <thead><tr><th>Code</th><th>Short Desc</th><th>Long Description</th><th>Type</th></tr></thead>
+          <tbody id="ed-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== MySQL BACKEND CONFIGURATION ==========
+// The backend PHP API endpoint (api.php) handles all MySQL operations.
+// Database setup script is provided in comments inside PHP file.
+const API_URL = 'api.php';
+
+let activeEmpId = null;
+let activeDept = null;
+let barChart = null;
+let departmentsData = [];
+let deptEdMap = {};  // { deptno: [edcodes] }
+let fullEdCodes = [];
+
+// ========== Helper: fetch from API ==========
+async function apiRequest(action, payload = {}) {
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, ...payload })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'API error');
+    return data;
+  } catch (err) {
+    console.error(`API ${action} error:`, err);
+    throw err;
+  }
+}
+
+// ========== Load all master data from MySQL ==========
+async function loadMasterData() {
+  try {
+    const [deptRes, edRes, mappingRes] = await Promise.all([
+      apiRequest('getDepartments'),
+      apiRequest('getEdCodes'),
+      apiRequest('getDeptEdMapping')
+    ]);
+    departmentsData = deptRes.data;
+    fullEdCodes = edRes.data;
+    // build mapping: deptEdMap[deptno] = array of ED code objects
+    const mapping = mappingRes.data; // [{deptno, edcode}]
+    deptEdMap = {};
+    departmentsData.forEach(d => { deptEdMap[d.deptno] = []; });
+    mapping.forEach(m => {
+      const edObj = fullEdCodes.find(e => e.code === m.edcode);
+      if (edObj && deptEdMap[m.deptno]) deptEdMap[m.deptno].push(edObj);
+    });
+    document.getElementById('db-status').innerHTML = '✅ MySQL database connected | Data loaded from railway_ed_system';
+    setTimeout(() => {
+      const statusDiv = document.getElementById('db-status');
+      if(statusDiv) statusDiv.style.opacity = '0.7';
+    }, 3000);
+    return true;
+  } catch (err) {
+    document.getElementById('db-status').innerHTML = '⚠️ MySQL connection failed. Using fallback demo data (setup required). Check api.php configuration.';
+    console.error('MySQL load error:', err);
+    // Fallback to embedded demo data (for standalone testing without DB)
+    loadFallbackData();
+    return false;
+  }
+}
+
+function loadFallbackData() {
+  // embedded demo departments
+  departmentsData = [
+    { deptno: '01', deptdesc: 'ACCOUNTS', arpan: 'ACC', status: 1 },
+    { deptno: '02', deptdesc: 'AUDIT', arpan: 'ADT', status: 1 },
+    { deptno: '03', deptdesc: 'GEN. ADMN.', arpan: 'ADM', status: 1 },
+    { deptno: '04', deptdesc: 'COMMERCIAL', arpan: 'COM', status: 1 },
+    { deptno: '05', deptdesc: 'ENGINEERING', arpan: 'ENG', status: 1 },
+    { deptno: '06', deptdesc: 'ELECTRICAL', arpan: 'ELE', status: 1 },
+    { deptno: '07', deptdesc: 'MECHANICAL', arpan: 'MEC', status: 1 },
+    { deptno: '08', deptdesc: 'MEDICAL', arpan: 'MED', status: 1 },
+    { deptno: '09', deptdesc: 'OPERATING', arpan: 'OPT', status: 1 },
+    { deptno: '10', deptdesc: 'PERSONNEL', arpan: 'PER', status: 1 },
+    { deptno: '11', deptdesc: 'SnT', arpan: 'SNT', status: 1 },
+    { deptno: '12', deptdesc: 'STORES', arpan: 'STR', status: 1 },
+    { deptno: '13', deptdesc: 'SECURITY', arpan: 'SEC', status: 1 },
+  ];
+  fullEdCodes = [
+    {code:'EW680',long:'REMOTE LOCALITY ALLOWANCE',short:'RLA'},{code:'E0101',long:'SUSP. PAY',short:'SUSP. PAY'},{code:'EW130',long:'UNIFORM ALLOWANCE',short:'UNIFORM-AL'},
+    {code:'EW200',long:'NURSING ALLOWANCE',short:'NURSING-AL'},{code:'EP001',long:'NPST-GOV',short:'NPST-GOV'},{code:'EB010',long:'PRODUCTIVITY LINKED BONUS',short:'PLB'},
+    {code:'EW310',long:'BREAKDOWN ALLOWANCE',short:'BDA'},{code:'EM100',long:'MEDICAL REIMBURSEMENT',short:'MED-REIM.'}
+  ];
+  const sampleMap = {
+    '01': ['E0101','EP001'],'02':['EB010'],'03':['EW130'],'04':[],'05':['EW310'],'08':['EW200','EM100'],'10':['EP001'],'13':[]
+  };
+  deptEdMap = {};
+  departmentsData.forEach(d => { deptEdMap[d.deptno] = []; });
+  for (let d in sampleMap) {
+    deptEdMap[d] = fullEdCodes.filter(e => sampleMap[d].includes(e.code));
+  }
+}
+
+// ========== LOGIN (credentials hardcoded or from DB) ==========
+async function doLogin() {
+  const empid = parseInt(document.getElementById('emp-id').value);
+  const pw = document.getElementById('password').value;
+  const err = document.getElementById('login-error');
+  try {
+    const res = await apiRequest('login', { empid, password: pw });
+    if (res.success && res.valid) {
+      err.classList.remove('show');
+      activeEmpId = empid;
+      document.getElementById('user-badge').textContent = 'EMP #' + empid;
+      document.getElementById('login-page').style.display = 'none';
+      document.getElementById('dashboard-page').style.display = 'block';
+      await loadMasterData();
+      initDashboard();
+    } else {
+      err.classList.add('show');
+    }
+  } catch (e) {
+    // fallback local hardcoded
+    if (empid === 101 && pw === '123') {
+      err.classList.remove('show');
+      activeEmpId = empid;
+      document.getElementById('user-badge').textContent = 'EMP #' + empid;
+      document.getElementById('login-page').style.display = 'none';
+      document.getElementById('dashboard-page').style.display = 'block';
+      loadFallbackData();
+      initDashboard();
+    } else {
+      err.classList.add('show');
+    }
+  }
+}
+
+function doLogout() {
+  document.getElementById('login-page').style.display = 'flex';
+  document.getElementById('dashboard-page').style.display = 'none';
+  document.getElementById('emp-id').value = '';
+  document.getElementById('password').value = '';
+  activeDept = null;
+}
+
+// ======= DASHBOARD RENDER =======
+function initDashboard() {
+  renderDeptCards();
+  renderEdTable(null);
+  renderCharts();
+  renderFlowchart();
+}
+
+const deptColors = ['#0f2346','#185fa5','#1d9e75','#534ab7','#d85a30','#ba7517','#3b6d11','#993556','#639922','#0f6e56','#3c3489','#a32d2d','#5f5e5a'];
+const deptBgs = ['#e6f1fb','#e6f1fb','#e1f5ee','#eeedfe','#faece7','#faeeda','#eaf3de','#fbeaf0','#eaf3de','#e1f5ee','#eeedfe','#fcebeb','#f1efe8'];
+
+function renderDeptCards() {
+  const grid = document.getElementById('dept-grid');
+  grid.innerHTML = '';
+  departmentsData.forEach((d, i) => {
+    const color = deptColors[i % deptColors.length];
+    const bg = deptBgs[i % deptBgs.length];
+    const edCount = (deptEdMap[d.deptno] || []).length;
+    const card = document.createElement('div');
+    card.className = 'dept-card';
+    card.style.setProperty('--dept-color', color);
+    card.style.setProperty('--dept-bg', bg);
+    card.dataset.deptno = d.deptno;
+    card.innerHTML = `
+      <div class="dept-card-badge">${d.arpan}</div>
+      <div class="dept-count">${d.deptno}</div>
+      <h4>${d.deptdesc}</h4>
+      <p>${edCount} ED codes</p>
+    `;
+    card.addEventListener('click', () => selectDept(d.deptno));
+    grid.appendChild(card);
+  });
+}
+
+function selectDept(deptno) {
+  activeDept = activeDept === deptno ? null : deptno;
+  document.querySelectorAll('.dept-card').forEach(c => {
+    c.classList.toggle('active', c.dataset.deptno === activeDept);
+  });
+  renderEdTable(activeDept);
+  updateCharts(activeDept);
+}
+
+function renderEdTable(deptno) {
+  const tbody = document.getElementById('ed-tbody');
+  const title = document.getElementById('ed-table-title');
+  const desc = document.getElementById('ed-table-desc');
+  let codes = deptno ? (deptEdMap[deptno] || []) : fullEdCodes;
+  const dept = departmentsData.find(d => d.deptno === deptno);
+  title.textContent = dept ? dept.deptdesc + ' — ED Codes' : 'All ED Codes';
+  desc.textContent = `Showing ${codes.length} earning/deduction code${codes.length !== 1 ? 's' : ''}${dept ? ' for ' + dept.deptdesc : ' (MySQL data)'}`;
+  tbody.innerHTML = codes.map(e => {
+    const isDeduct = e.code.startsWith('D') || e.long.toLowerCase().includes('deduction') || e.long.toLowerCase().includes('recovery');
+    const type = isDeduct ? 'Deduction' : 'Earning';
+    const typeBadge = isDeduct ? 'badge-d' : 'badge-e';
+    return `<tr><td><span class="badge-code">${e.code}</span></td><td style="font-weight:500;font-size:12px;">${e.short}</td><td style="font-size:12px;color:#5f5e5a;">${e.long}</td><td><span class="badge-code ${typeBadge}">${type}</span></td></tr>`;
+  }).join('');
+}
+
+function renderCharts() {
+  const barLabels = departmentsData.map(d => d.arpan);
+  const barData = departmentsData.map(d => (deptEdMap[d.deptno] || []).length);
+  const ctx = document.getElementById('barChart').getContext('2d');
+  if(barChart) barChart.destroy();
+  barChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: barLabels, datasets: [{ label: 'ED codes', data: barData, backgroundColor: deptColors.map(c => c + 'cc'), borderColor: deptColors, borderWidth: 1.5, borderRadius: 5 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 11 }, autoSkip: false, maxRotation: 45 } }, y: { grid: { color: '#f1efe8' }, ticks: { font: { size: 11 } } } } }
+  });
+}
+
+function updateCharts(deptno) {
+  if (!barChart) return;
+  barChart.data.datasets[0].backgroundColor = departmentsData.map((d, i) => {
+    const base = deptColors[i % deptColors.length];
+    if (!deptno) return base + 'cc';
+    return d.deptno === deptno ? base : base + '44';
+  });
+  barChart.update();
+}
+
+function renderFlowchart() {
+  const wrap = document.getElementById('flowchart-svg-wrap');
+  const svgW = 1100, svgH = 520;
+  const rootX = 520, rootY = 50, rootW = 160, rootH = 44;
+  let svg = `<svg viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:${svgW}px;display:block;"><defs><marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#9a9890"/></marker></defs>`;
+  svg += `<rect x="${rootX - rootW/2}" y="${rootY}" width="${rootW}" height="${rootH}" rx="8" fill="#0f2346"/><text x="${rootX}" y="${rootY + 26}" text-anchor="middle" font-size="13" font-weight="600" fill="#ffffff">Indian Railways</text>`;
+  const midY = rootY + rootH + 50;
+  svg += `<line x1="${rootX}" y1="${rootY + rootH}" x2="${rootX}" y2="${midY - 10}" stroke="#9a9890" stroke-width="1.5" marker-end="url(#arr)"/>`;
+  svg += `<rect x="${rootX - 75}" y="${midY - 10}" width="150" height="36" rx="6" fill="#e8a020"/><text x="${rootX}" y="${midY + 12}" text-anchor="middle" font-size="12" font-weight="600" fill="#0f2346">13 Departments</text>`;
+  const row1Depts = departmentsData.slice(0, 7), row2Depts = departmentsData.slice(7);
+  const row1Y = midY + 70, row2Y = row1Y + 90;
+  const gap1 = svgW / (row1Depts.length + 1), gap2 = svgW / (row2Depts.length + 1);
+  row1Depts.forEach((d, i) => {
+    const cx = gap1 * (i + 1), cy = row1Y;
+    const color = deptColors[i % deptColors.length];
+    const edList = (deptEdMap[d.deptno] || []).slice(0, 6);
+    const edHtml = encodeURIComponent(JSON.stringify({ dept: d.deptdesc, codes: edList }));
+    svg += `<line x1="${rootX}" y1="${midY + 26}" x2="${cx}" y2="${cy}" stroke="#9a9890" stroke-width="1" stroke-dasharray="4,3"/>`;
+    svg += `<g class="flow-node" data-ed="${edHtml}" onmouseenter="showFlowTip(event,this)" onmouseleave="hideTip()"><rect x="${cx - nodeW/2}" y="${cy - nodeH/2}" width="130" height="38" rx="7" fill="${color}" opacity="0.92"/><text x="${cx}" y="${cy - 4}" text-anchor="middle" font-size="11" font-weight="600" fill="#ffffff">${d.deptdesc}</text><text x="${cx}" y="${cy + 10}" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.7)">${d.arpan} · ${(deptEdMap[d.deptno]||[]).length} codes</text></g>`;
+  });
+  row2Depts.forEach((d, i) => {
+    const cx = gap2 * (i + 1), cy = row2Y;
+    const color = deptColors[(i + 7) % deptColors.length];
+    const edList = (deptEdMap[d.deptno] || []).slice(0, 6);
+    const edHtml = encodeURIComponent(JSON.stringify({ dept: d.deptdesc, codes: edList }));
+    svg += `<line x1="${rootX}" y1="${midY + 26}" x2="${cx}" y2="${cy}" stroke="#9a9890" stroke-width="1" stroke-dasharray="4,3"/>`;
+    svg += `<g class="flow-node" data-ed="${edHtml}" onmouseenter="showFlowTip(event,this)" onmouseleave="hideTip()"><rect x="${cx - nodeW/2}" y="${cy - nodeH/2}" width="130" height="38" rx="7" fill="${color}" opacity="0.92"/><text x="${cx}" y="${cy - 4}" text-anchor="middle" font-size="11" font-weight="600" fill="#ffffff">${d.deptdesc}</text><text x="${cx}" y="${cy + 10}" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.7)">${d.arpan} · ${(deptEdMap[d.deptno]||[]).length} codes</text></g>`;
+  });
+  svg += `<rect x="30" y="${row2Y + 65}" width="140" height="36" rx="6" fill="#e1f5ee"/><text x="100" y="${row2Y + 80}" text-anchor="middle" font-size="11" font-weight="600" fill="#0f6e56">Earning Codes</text><text x="100" y="${row2Y + 94}" text-anchor="middle" font-size="10" fill="#1d9e75">Prefix E</text>`;
+  svg += `<rect x="200" y="${row2Y + 65}" width="140" height="36" rx="6" fill="#faece7"/><text x="270" y="${row2Y + 80}" text-anchor="middle" font-size="11" font-weight="600" fill="#993c1d">Deduction Codes</text><text x="270" y="${row2Y + 94}" text-anchor="middle" font-size="10" fill="#d85a30">Recoveries</text>`;
+  svg += `</svg>`;
+  wrap.innerHTML = svg;
+}
+const nodeW=130, nodeH=38;
+function showFlowTip(evt, el) {
+  const raw = decodeURIComponent(el.dataset.ed);
+  const data = JSON.parse(raw);
+  const tip = document.getElementById('tooltip');
+  let html = `<h5>${data.dept}</h5>`;
+  if (data.codes.length===0) html += '<div class="ed-item"><span class="ed-desc">No specific codes mapped</span></div>';
+  else { data.codes.forEach(c=>{ html+=`<div class="ed-item"><span class="ed-code">${c.code}</span><span class="ed-desc" style="margin-left:6px;">${c.long.length>45?c.long.slice(0,45)+'…':c.long}</span></div>`; }); if((deptEdMap[data.dept]||[]).length>6) html+=`<div style="font-size:11px;color:#9a9890;margin-top:4px;">+ more codes — click department</div>`; }
+  tip.innerHTML = html; tip.style.display = 'block'; positionTip(evt);
+}
+document.addEventListener('mousemove', e=>{ const tip=document.getElementById('tooltip'); if(tip.style.display==='block') positionTip(e); });
+function positionTip(evt){ const tip=document.getElementById('tooltip'); let x=evt.clientX+14,y=evt.clientY+14; if(x+320>window.innerWidth) x=evt.clientX-330; if(y+200>window.innerHeight) y=evt.clientY-200; tip.style.left=x+'px'; tip.style.top=y+'px'; }
+function hideTip(){ document.getElementById('tooltip').style.display='none'; }
+document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+</script>
+</body>
+</html>
